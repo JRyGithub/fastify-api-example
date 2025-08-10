@@ -4,19 +4,26 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "bun --hot src/app.ts",
+    "dev": "bun --hot src/server.ts",
     "start": "bun src/app.ts",
     "lint": "eslint .",
     "format": "prettier -w .",
-    "check": "tsc -p tsconfig.json --noEmit"
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:coverage": "bun test --coverage"
   },
   "devDependencies": {
+    "@jest/globals": "^30.0.5",
     "@types/bun": "latest",
+    "@types/jest": "^30.0.0",
     "@types/node": "^24.2.1",
     "@typescript-eslint/eslint-plugin": "^8.39.0",
     "@typescript-eslint/parser": "^8.39.0",
     "eslint": "^9.33.0",
-    "prettier": "^3.6.2"
+    "jest": "^30.0.5",
+    "prettier": "^3.6.2",
+    "ts-jest": "^29.4.1"
   },
   "peerDependencies": {
     "typescript": "^5.9.2"

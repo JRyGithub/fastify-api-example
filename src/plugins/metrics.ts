@@ -1,9 +1,15 @@
 import type { FastifyInstance } from "fastify";
+import fp from "fastify-plugin";
 
-export async function registerMetrics(app: FastifyInstance) {
-  const metricsPlugin = require("fastify-metrics");
+export async function metricsPlugin(app: FastifyInstance) {
+  const metricsModule = require("fastify-metrics");
 
-  await app.register(metricsPlugin, {
+  await app.register(metricsModule, {
     endpoint: "/metrics",
+    clearRegister: true,
   });
 }
+
+export const registerMetrics = fp(metricsPlugin, {
+  name: "metrics-plugin",
+});

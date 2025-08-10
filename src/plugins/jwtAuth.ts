@@ -55,7 +55,7 @@ export async function jwtPlugin(app: FastifyInstance) {
     try {
       await req.jwtVerify();
     } catch (_err) {
-      return reply.code(401).send({ error: "Unauthorized", message: "Invalid or expired token" });
+      reply.code(401).send({ error: "Unauthorized", message: "Invalid or expired token" });
     }
   };
 

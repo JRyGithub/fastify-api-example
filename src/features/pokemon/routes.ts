@@ -1,12 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { ParamsByName, QueryList } from "../../lib/types";
-import {
-  PokemonResponseSchema,
-  PokemonListSchema,
-  type PokemonResponse,
-  type PokemonList,
-} from "./types";
-import { fetchPokemon, fetchPokemonList } from "../../lib/pokeapi";
+import { PokemonResponseSchema, type PokemonResponse } from "./types";
+import { fetchPokemon, fetchPokemonList, type PokemonList } from "../../lib/pokeapi";
 
 export async function registerPokemonRoutes(app: FastifyInstance) {
   app.get<{ Params: ParamsByName; Reply: PokemonResponse | string }>("/pokemon/:name", {
@@ -53,7 +48,24 @@ export async function registerPokemonRoutes(app: FastifyInstance) {
       description: "Fetches a list of Pokémon with pagination support.",
       tags: ["pokemon"],
       response: {
-        200: PokemonListSchema,
+        200: {
+          type: "object",
+          properties: {
+            count: { type: "number" },
+            next: { type: "string", nullable: true },
+            previous: { type: "string", nullable: true },
+            results: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  name: { type: "string" },
+                  url: { type: "string" },
+                },
+              },
+            },
+          },
+        },
         500: { type: "string", description: "Internal server error" },
       },
     },
@@ -64,8 +76,8 @@ export async function registerPokemonRoutes(app: FastifyInstance) {
 
         const transformedData: PokemonList = {
           count: data.count,
-          next: data.next || undefined,
-          previous: data.previous || undefined,
+          next: data.next,
+          previous: data.previous,
           results: data.results,
         };
 

@@ -1,4 +1,4 @@
-import fastify from "fastify";
+import fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import type { TypeBoxTypeProvider } from "@fastify/type-provider-typebox";
 import { loadEnv } from "./config/env";
 import { registerSwagger } from "./plugins/swagger";
@@ -7,26 +7,21 @@ import { registerMetrics } from "./plugins/metrics";
 import { registerSecurity } from "./plugins/security";
 import { registerJWTAuth } from "./plugins/jwtAuth";
 
-async function bootstrap() {
+export default async function build(
+  opts = {} as FastifyServerOptions & { skipAuth?: boolean; skipMetrics?: boolean },
+): Promise<FastifyInstance> {
   const env = loadEnv();
-  const { PORT, HOST } = env;
 
-  const app = fastify({
-    logger: {
-      level: env.NODE_ENV === "development" ? "debug" : "info",
-      transport:
-        env.NODE_ENV === "production"
-          ? undefined
-          : {
-              target: "pino-pretty",
-            },
-    },
-  }).withTypeProvider<TypeBoxTypeProvider>();
+  const app = fastify(opts).withTypeProvider<TypeBoxTypeProvider>();
 
   // Plugins
   await app.register(registerSecurity, { corsOrigin: env.CORS_ORIGIN });
   await app.register(registerSwagger);
-  await app.register(registerMetrics);
+
+  if (!opts.skipMetrics) {
+    await app.register(registerMetrics);
+  }
+
   await app.register(registerJWTAuth);
 
   // Routes
@@ -34,18 +29,16 @@ async function bootstrap() {
     res.send({ message: "Success" });
   });
 
-  await app.register(async (protectedApp) => {
-    protectedApp.addHook("onRequest", protectedApp.verifyJwt);
-    await protectedApp.register(registerPokemonRoutes, { prefix: "/api" });
-  });
+  if (opts.skipAuth) {
+    await app.register(registerPokemonRoutes, { prefix: "/api" });
+  } else {
+    await app.register(async (protectedApp) => {
+      protectedApp.addHook("onRequest", protectedApp.verifyJwt);
+      await protectedApp.register(registerPokemonRoutes, { prefix: "/api" });
+    });
+  }
 
   await app.ready();
 
-  const address = await app.listen({ port: PORT, host: HOST });
-  console.log(`Server is running at http://${address}`);
+  return app;
 }
-
-bootstrap().catch((err) => {
-  console.error("Error starting the server:", err);
-  process.exit(1);
-});
